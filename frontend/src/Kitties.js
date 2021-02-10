@@ -10,27 +10,55 @@ export default function Kitties (props) {
   const { api, keyring } = useSubstrate();
   const { accountPair } = props;
 
-  const [kittyCnt, setKittyCnt] = useState(0);
+  const [kittyCount, setKittyCnt] = useState(0);
   const [kittyDNAs, setKittyDNAs] = useState([]);
   const [kittyOwners, setKittyOwners] = useState([]);
-  const [kittyPrices, setKittyPrices] = useState([]);
   const [kitties, setKitties] = useState([]);
   const [status, setStatus] = useState('');
 
   const fetchKittyCnt = () => {
-    /* TODO: 加代码，从 substrate 端读取数据过来 */
+    api.query.kittiesModule.kittiesCount(count => {
+      const countNum = count.toNumber();
+      setKittyCnt(countNum);
+    });
   };
 
   const fetchKitties = () => {
-    /* TODO: 加代码，从 substrate 端读取数据过来 */
+    let unSubDNAs = null;
+    let unSubOwners = null;
+
+    const asyncFetch = async () => {
+      const kittyIndices = [...Array(kittyCount).keys()];
+      unSubDNAs = await api.query.kittiesModule.kittyDB.multi(
+        kittyIndices,
+        dnas => setKittyDNAs(dnas.map(dna => dna.value.toU8a()))
+      );
+      unSubOwners = await api.query.kittiesModule.kittyOwner.multi(
+        kittyIndices,
+        owners => setKittyOwners(owners.map(owner => owner.toHuman()))
+      );
+    };
+    
+    asyncFetch();
+
+    return () => {
+      unSubDNAs && unSubDNAs();
+      unSubOwners && unSubOwners();
+    };
   };
 
   const populateKitties = () => {
-    /* TODO: 加代码，从 substrate 端读取数据过来 */
+    const kittyIndices = [...Array(kittyCount).keys()];
+    const kitties = kittyIndices.map(n => ({
+      id: n,
+      dna: kittyDNAs[n],
+      owner: kittyOwners[n],
+    }));
+    setKitties(kitties);
   };
 
   useEffect(fetchKittyCnt, [api, keyring]);
-  useEffect(fetchKitties, [api, kittyCnt]);
+  useEffect(fetchKitties, [api, kittyCount]);
   useEffect(populateKitties, [kittyDNAs, kittyOwners]);
 
   return <Grid.Column width={16}>

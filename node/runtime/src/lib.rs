@@ -40,7 +40,7 @@ pub use frame_support::{
 
 /// Import the template pallet.
 pub use pallet_template;
-pub use pallet_kitties;
+pub use pallet_kitty;
 
 /// An index to a block.
 pub type BlockNumber = u32;
@@ -267,13 +267,19 @@ impl pallet_template::Trait for Runtime {
 	type Event = Event;
 }
 
+parameter_types! {
+    pub const NewKittyReserve: u32 = 5000000;
+}
 
-/// Configure the template pallet in pallets/template.
-impl pallet_kitties::Trait for Runtime {
+/// Configure the kitties pallet in pallets/template.
+impl pallet_kitty::Trait for Runtime {
 	type Event = Event;
-	type KittyIndex = u32;
-	type Currency = Balances;
 	type Randomness = RandomnessCollectiveFlip;
+	type KittyIndex = u32;
+
+	type NewKittyReserve = NewKittyReserve;
+	type Currency = pallet_balances::Module<Self>;
+	
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
@@ -293,7 +299,7 @@ construct_runtime!(
 		Sudo: pallet_sudo::{Module, Call, Config<T>, Storage, Event<T>},
 		// Include the custom logic from the template pallet in the runtime.
 		TemplateModule: pallet_template::{Module, Call, Storage, Event<T>},
-		KittiesModule: pallet_kitties::{Module, Call, Storage, Event<T>},
+		KittiesModule: pallet_kitty::{Module, Call, Storage, Event<T>},
 	}
 );
 
